@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="10085"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--View Controller-->
@@ -16,7 +17,34 @@
                     <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="background" translatesAutoresizingMaskIntoConstraints="NO" id="KnH-B3-F4C">
+                                <rect key="frame" x="20" y="20" width="560" height="560"/>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Virtual Tourist" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fzI-Ux-LjO">
+                                <rect key="frame" x="200" y="279" width="201" height="42"/>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-CondensedBlack" family="Helvetica Neue" pointSize="35"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                                <color key="highlightedColor" red="1" green="1" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="by Adhemar" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Feg-1U-az0">
+                                <rect key="frame" x="336" y="323" width="102" height="22"/>
+                                <fontDescription key="fontDescription" type="system" weight="semibold" pointSize="18"/>
+                                <color key="textColor" red="0.75010486577181212" green="0.93896270158388973" blue="0.97032298657718119" alpha="1" colorSpace="calibratedRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="fzI-Ux-LjO" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="1LC-C1-gvF"/>
+                            <constraint firstItem="KnH-B3-F4C" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="5zj-NI-61M"/>
+                            <constraint firstItem="fzI-Ux-LjO" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="8BD-Oe-Ypf"/>
+                            <constraint firstItem="KnH-B3-F4C" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="TDW-Ht-yQT"/>
+                            <constraint firstAttribute="bottom" secondItem="KnH-B3-F4C" secondAttribute="bottom" constant="20" symbolic="YES" id="Ufe-Vp-S3b"/>
+                            <constraint firstItem="Feg-1U-az0" firstAttribute="leading" secondItem="KnH-B3-F4C" secondAttribute="trailing" constant="-244" id="fvD-2j-cUW"/>
+                            <constraint firstItem="KnH-B3-F4C" firstAttribute="leading" secondItem="Ze5-6b-2t3" secondAttribute="leadingMargin" id="gFY-7u-s5D"/>
+                            <constraint firstItem="Feg-1U-az0" firstAttribute="top" secondItem="fzI-Ux-LjO" secondAttribute="bottom" constant="2" id="tsw-RC-uGv"/>
+                        </constraints>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -24,4 +52,7 @@
             <point key="canvasLocation" x="53" y="375"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="background" width="375" height="667"/>
+    </resources>
 </document>

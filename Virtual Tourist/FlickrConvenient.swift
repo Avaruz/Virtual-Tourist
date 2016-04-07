@@ -11,21 +11,24 @@ import CoreData
 
 extension FlickrClient {
     
-
+    
     func getPhotosForPin(pin: Pin, completionHandler: (success: Bool, errorString: String?) -> Void) {
         
         // see if we previously  received total number of pages for pin
         var pageNumber = 1
         
-        if let numPages = pin.numPages {
-            var numPagesInt = numPages as Int
-            // We might only access the first 4000 images returned by a search, so limit the results
-            if numPagesInt > 190 {
-                numPagesInt = 190
-            }
-            pageNumber = Int((arc4random_uniform(UInt32(numPagesInt)))) + 1
-            print("Getting photos for page number \(pageNumber) in \(numPages) total pages")
+        guard let numPages = pin.numPages else {
+            return
         }
+        
+        var numPagesInt = numPages as Int
+        // We might only access the first 4000 images returned by a search, so limit the results
+        if numPagesInt > 190 {
+            numPagesInt = 190
+        }
+        pageNumber = Int((arc4random_uniform(UInt32(numPagesInt)))) + 1
+        print("Getting photos for page number \(pageNumber) in \(numPages) total pages")
+        
         // Shuffle Sort to get more random images
         let possibleSorts = ["date-posted-desc", "date-posted-asc", "date-taken-desc", "date-taken-asc", "interstingness-desc", "interestingness-asc"]
         let sortBy = possibleSorts[Int((arc4random_uniform(UInt32(possibleSorts.count))))]
@@ -43,47 +46,53 @@ extension FlickrClient {
         ]
         
         taskForGETMethod(nil, parameters: parameters as? [String : AnyObject], parseJSON: true) { (JSONResult, error) in
-            if let error = error {
-                var errorMessage = ""
-                switch error.code {
-                case 2:
-                    errorMessage = "Network connection lost"
-                    break
-                default:
-                    errorMessage = "A technical error occured while fetching photos"
-                    break
-                }
-                completionHandler(success: false, errorString: errorMessage)
-            } else {
+            
+            
+            
+            guard let error = error  else {
                 if let photosDictionary = JSONResult.valueForKey("photos") as? [String: AnyObject],
-                photosArray = photosDictionary["photo"] as? [[String: AnyObject]],
+                    photosArray = photosDictionary["photo"] as? [[String: AnyObject]],
                     numPages = photosDictionary["pages"] as? Int {
                     
-                        dispatch_async(dispatch_get_main_queue(), {
-                            pin.numPages = numPages
+                    dispatch_async(dispatch_get_main_queue(), {
+                        pin.numPages = numPages
+                        
+                        for photoDictionary in photosArray {
+                            let photoURLString = photoDictionary["url_m"] as! String
+                            let photo = Photo(photoURL: photoURLString, pin: pin, context: self.sharedContext)
                             
-                            for photoDictionary in photosArray {
-                                let photoURLString = photoDictionary["url_m"] as! String
-                                let photo = Photo(photoURL: photoURLString, pin: pin, context: self.sharedContext)
-                                
-                                self.downloadImageForPhoto(photo) { (success, errorString) in
-                                    if success {
-                                        dispatch_async(dispatch_get_main_queue(), {
-                                            CoreDataStackManager.sharedInstance().saveContext()
-                                            completionHandler(success: true, errorString: nil)
-                                        })
-                                    } else {
-                                        dispatch_async(dispatch_get_main_queue(), {
-                                            completionHandler(success: false, errorString: errorString)
-                                        })
-                                    }
+                            self.downloadImageForPhoto(photo) { (success, errorString) in
+                                if success {
+                                    dispatch_async(dispatch_get_main_queue(), {
+                                        CoreDataStackManager.sharedInstance().saveContext()
+                                        completionHandler(success: true, errorString: nil)
+                                    })
+                                } else {
+                                    dispatch_async(dispatch_get_main_queue(), {
+                                        completionHandler(success: false, errorString: errorString)
+                                    })
                                 }
                             }
-                        })
+                        }
+                    })
                 } else {
                     completionHandler(success: false, errorString: "Unable to download Photos")
                 }
+                return
             }
+            
+            var errorMessage = ""
+            switch error.code {
+            case 2:
+                errorMessage = "Network connection lost"
+                break
+            default:
+                errorMessage = "A technical error occured while fetching photos"
+                break
+            }
+            completionHandler(success: false, errorString: errorMessage)
+            
+            
         }
     }
     

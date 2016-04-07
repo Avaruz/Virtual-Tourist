@@ -24,7 +24,7 @@ class MapViewController: BaseViewController, MKMapViewDelegate {
         super.viewDidLoad()
         
         // Add a LongPressGestureRecognizer to add a new Pin
-        let longPress = UILongPressGestureRecognizer(target: self, action: "addPin:")
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(MapViewController.addPin(_:)))
         longPress.minimumPressDuration = 1.0
         mapView.addGestureRecognizer(longPress)
         
@@ -32,10 +32,6 @@ class MapViewController: BaseViewController, MKMapViewDelegate {
         mapView.addAnnotations(fetchAllPins())
     }
     
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
     
     // MARK: - Core Data implementation
     
