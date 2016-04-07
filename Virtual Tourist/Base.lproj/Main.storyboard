@@ -55,9 +55,9 @@
                             </mask>
                             <mask key="constraints">
                                 <exclude reference="dQi-LC-IwQ"/>
-                                <exclude reference="wns-zb-Y8b"/>
-                                <exclude reference="d29-65-f23"/>
                                 <exclude reference="ceT-y4-5mR"/>
+                                <exclude reference="d29-65-f23"/>
+                                <exclude reference="wns-zb-Y8b"/>
                             </mask>
                         </variation>
                         <variation key="widthClass=compact">
@@ -66,9 +66,9 @@
                             </mask>
                             <mask key="constraints">
                                 <include reference="dQi-LC-IwQ"/>
-                                <include reference="wns-zb-Y8b"/>
-                                <include reference="d29-65-f23"/>
                                 <include reference="ceT-y4-5mR"/>
+                                <include reference="d29-65-f23"/>
+                                <include reference="wns-zb-Y8b"/>
                             </mask>
                         </variation>
                     </view>
@@ -176,12 +176,12 @@
                                                 <exclude reference="rdH-iW-6aW"/>
                                             </mask>
                                             <mask key="constraints">
-                                                <exclude reference="y1V-Y5-qj8"/>
                                                 <exclude reference="qlK-Mb-aR6"/>
-                                                <exclude reference="dWP-6x-zBn"/>
-                                                <exclude reference="ZS7-zT-B4N"/>
-                                                <exclude reference="Smf-bv-hpo"/>
+                                                <exclude reference="y1V-Y5-qj8"/>
                                                 <exclude reference="J0U-Wl-5ls"/>
+                                                <exclude reference="Smf-bv-hpo"/>
+                                                <exclude reference="ZS7-zT-B4N"/>
+                                                <exclude reference="dWP-6x-zBn"/>
                                             </mask>
                                         </variation>
                                         <variation key="widthClass=compact">
@@ -190,12 +190,12 @@
                                                 <include reference="rdH-iW-6aW"/>
                                             </mask>
                                             <mask key="constraints">
-                                                <include reference="y1V-Y5-qj8"/>
                                                 <include reference="qlK-Mb-aR6"/>
-                                                <exclude reference="dWP-6x-zBn"/>
-                                                <exclude reference="ZS7-zT-B4N"/>
-                                                <exclude reference="Smf-bv-hpo"/>
+                                                <include reference="y1V-Y5-qj8"/>
                                                 <exclude reference="J0U-Wl-5ls"/>
+                                                <exclude reference="Smf-bv-hpo"/>
+                                                <exclude reference="ZS7-zT-B4N"/>
+                                                <exclude reference="dWP-6x-zBn"/>
                                             </mask>
                                         </variation>
                                         <connections>
@@ -259,14 +259,14 @@
                             </mask>
                             <mask key="constraints">
                                 <exclude reference="5uN-a1-KDT"/>
-                                <exclude reference="dve-Oe-IKf"/>
-                                <exclude reference="8bp-v5-ZQ1"/>
                                 <exclude reference="6vC-yo-uBi"/>
+                                <exclude reference="8bp-v5-ZQ1"/>
+                                <exclude reference="dve-Oe-IKf"/>
+                                <exclude reference="YuW-cw-tSR"/>
                                 <exclude reference="uWh-6I-0wP"/>
                                 <exclude reference="wka-Mc-iiS"/>
-                                <exclude reference="YuW-cw-tSR"/>
-                                <exclude reference="tXP-FK-S0g"/>
                                 <exclude reference="bJK-do-maA"/>
+                                <exclude reference="tXP-FK-S0g"/>
                                 <exclude reference="uGw-YX-JjU"/>
                             </mask>
                         </variation>
@@ -279,14 +279,14 @@
                             </mask>
                             <mask key="constraints">
                                 <include reference="5uN-a1-KDT"/>
-                                <include reference="dve-Oe-IKf"/>
-                                <include reference="8bp-v5-ZQ1"/>
                                 <include reference="6vC-yo-uBi"/>
+                                <include reference="8bp-v5-ZQ1"/>
+                                <include reference="dve-Oe-IKf"/>
+                                <include reference="YuW-cw-tSR"/>
                                 <include reference="uWh-6I-0wP"/>
                                 <include reference="wka-Mc-iiS"/>
-                                <include reference="YuW-cw-tSR"/>
-                                <include reference="tXP-FK-S0g"/>
                                 <include reference="bJK-do-maA"/>
+                                <include reference="tXP-FK-S0g"/>
                                 <include reference="uGw-YX-JjU"/>
                             </mask>
                         </variation>

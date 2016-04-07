@@ -38,7 +38,7 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "Yes"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Virtual Tourist/MapViewController.swift"
@@ -47,8 +47,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "186"
             endingLineNumber = "186"
-            landmarkName = "loadMapRegion()"
-            landmarkType = "5">
+            landmarkName = "MapViewController"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -223,6 +223,102 @@
                   startingLineNumber = "70"
                   endingLineNumber = "70"
                   offsetFromSymbolStart = "81">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Virtual Tourist/LocationDetailViewController.swift"
+            timestampString = "481744238.759715"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "72"
+            endingLineNumber = "72"
+            landmarkName = "loadNewCollectionSet()"
+            landmarkType = "5">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Virtual_Tourist.LocationDetailViewController.loadNewCollectionSet () -&gt; ()"
+                  moduleName = "Virtual Tourist"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/Adhemar/Desarrollo/Virtual%20Tourist/Virtual%20Tourist/LocationDetailViewController.swift"
+                  timestampString = "481744239.198611"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "73"
+                  endingLineNumber = "73"
+                  offsetFromSymbolStart = "1619">
+               </Location>
+               <Location
+                  shouldBeEnabled = "No"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Virtual_Tourist.LocationDetailViewController.(loadNewCollectionSet () -&gt; ()).(closure #1)"
+                  moduleName = "Virtual Tourist"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/Adhemar/Desarrollo/Virtual%20Tourist/Virtual%20Tourist/LocationDetailViewController.swift"
+                  timestampString = "481744239.198795"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "74"
+                  endingLineNumber = "74"
+                  offsetFromSymbolStart = "59">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Virtual Tourist/LocationDetailViewController.swift"
+            timestampString = "481744279.333417"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "74"
+            endingLineNumber = "74"
+            landmarkName = "loadNewCollectionSet()"
+            landmarkType = "5">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Virtual_Tourist.LocationDetailViewController.loadNewCollectionSet () -&gt; ()"
+                  moduleName = "Virtual Tourist"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/Adhemar/Desarrollo/Virtual%20Tourist/Virtual%20Tourist/LocationDetailViewController.swift"
+                  timestampString = "481744660.767922"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "74"
+                  endingLineNumber = "74"
+                  offsetFromSymbolStart = "1619">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Virtual_Tourist.LocationDetailViewController.(loadNewCollectionSet () -&gt; ()).(closure #1)"
+                  moduleName = "Virtual Tourist"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/Adhemar/Desarrollo/Virtual%20Tourist/Virtual%20Tourist/LocationDetailViewController.swift"
+                  timestampString = "481744660.768107"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "75"
+                  endingLineNumber = "75"
+                  offsetFromSymbolStart = "59">
                </Location>
             </Locations>
          </BreakpointContent>

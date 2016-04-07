@@ -65,6 +65,7 @@ class LocationDetailViewController: BaseViewController, UICollectionViewDataSour
         for photo in fetchedResultsController.fetchedObjects as! [Photo] {
             sharedContext.deleteObject(photo)
         }
+        
         CoreDataStackManager.sharedInstance().saveContext()
         
         self.newCollectionButton.enabled = false
@@ -108,6 +109,7 @@ class LocationDetailViewController: BaseViewController, UICollectionViewDataSour
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("FlickrCell", forIndexPath: indexPath) as! FlickrCell
         let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
+        cell.imageView.image = UIImage(named: "no-image")
         
         if photo.imagePath != nil {
             cell.activityIndicator.stopAnimating()
