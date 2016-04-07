@@ -2,8 +2,8 @@
 //  FlickrClient.swift
 //  Virtual Tourist
 //
-//  Created by Julia Will on 30.11.15.
-//  Copyright © 2015 Julia Will. All rights reserved.
+//  Created by Adhemar Soria Galvarro on 28/3/16.
+//  Copyright © 2016 Adhemar Soria Galvarro. All rights reserved.
 //
 
 import Foundation

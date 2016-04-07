@@ -2,12 +2,9 @@
 //  MapViewController.swift
 //  Virtual Tourist
 //
-//  Created by Julia Will on 28.11.15.
-//  Copyright © 2015 Julia Will. All rights reserved.
+///  Created by Adhemar Soria Galvarro on 28/3/16.
+//  Copyright © 2016 Adhemar Soria Galvarro. All rights reserved.
 //
-// TODO: preload images
-// TODO: better error handling
-// TODO: save Map Region through Core Data
 
 import UIKit
 import MapKit

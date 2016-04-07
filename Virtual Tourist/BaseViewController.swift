@@ -12,7 +12,6 @@ class BaseViewController: UIViewController {
     
     let pinFinishedDownloadingNotification = "pinFinishedDownloadNotification"
     
-    /* via http://stackoverflow.com/a/9371196/1415844 */
     func shakeScreen() {
         let anim = CAKeyframeAnimation( keyPath:"transform" )
         anim.values = [
