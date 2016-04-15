@@ -47,16 +47,16 @@
                                             <rect key="frame" x="0.0" y="0.0" width="102" height="94"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="gkt-Pn-19E">
+                                                <activityIndicatorView opaque="NO" contentMode="center" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="gkt-Pn-19E">
                                                     <rect key="frame" x="41" y="41" width="20" height="20"/>
                                                 </activityIndicatorView>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="no-image" translatesAutoresizingMaskIntoConstraints="NO" id="MCj-CF-nAt">
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="noimage" highlightedImage="noimage" translatesAutoresizingMaskIntoConstraints="NO" id="MCj-CF-nAt">
                                                     <rect key="frame" x="0.0" y="0.0" width="102" height="94"/>
                                                 </imageView>
                                                 <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="lkW-Sm-MNr">
                                                     <rect key="frame" x="28" y="34" width="47" height="26"/>
-                                                    <state key="normal" image="remove image"/>
-                                                    <state key="highlighted" image="remove image"/>
+                                                    <state key="normal" image="removeimage"/>
+                                                    <state key="highlighted" image="removeimage" backgroundImage="removeimage"/>
                                                 </button>
                                             </subviews>
                                             <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -228,7 +228,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="no-image" width="100" height="100"/>
-        <image name="remove image" width="15" height="15"/>
+        <image name="noimage" width="100" height="100"/>
+        <image name="removeimage" width="15" height="15"/>
     </resources>
 </document>

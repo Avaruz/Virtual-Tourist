@@ -274,10 +274,15 @@ class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsCo
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell{
         
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier("FlickrCell", forIndexPath: indexPath) as! FlickrCell
+        cell.photoView.image = UIImage(named: "noimage")
         let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
-        //print("Photo URL from the collection view is \(photo.url)")
         
-        cell.photoView.image = photo.image
+        if (photo.url != nil)
+        {
+            cell.photoView.image = photo.image
+            cell.activityIndicator.stopAnimating()
+        }
+        
         
         cell.deleteButton.hidden = true
         cell.deleteButton.layer.setValue(indexPath, forKey: "indexPath")

@@ -21,7 +21,7 @@ class FlickrCell: UICollectionViewCell {
         
         if photoView.image == nil {
             activityIndicator.hidden = false
-            photoView.image = UIImage(named: "no-image")
+            photoView.image = UIImage(named: "noimage")
             activityIndicator.startAnimating()
         }
     }
