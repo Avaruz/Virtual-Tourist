@@ -1,324 +1,198 @@
 //
-//  PhotoAlbumViewController.swift
-//  VirtualTourist
+//  MapViewController.swift
+//  Virtual Tourist
 //
-//  Created by Stella Su on 2/7/16.
-//  Copyright © 2016 Million Stars, LLC. All rights reserved.
+///  Created by Adhemar Soria Galvarro on 28/3/16.
+//  Copyright © 2016 Adhemar Soria Galvarro. All rights reserved.
 //
 
 import UIKit
 import MapKit
 import CoreData
 
-class MapViewController: UIViewController, MKMapViewDelegate, NSFetchedResultsControllerDelegate, UICollectionViewDelegate, UICollectionViewDataSource {
-    
-    var pin: Pin? = nil
-    
-    // Flag for deleting pictures
-    var isDeleting = false
-    
-    var editingFlag: Bool = false
+class MapViewController: BaseViewController, MKMapViewDelegate {
     
     @IBOutlet weak var mapView: MKMapView!
-    @IBOutlet weak var multiUseButton: UIButton!
-    @IBOutlet weak var collectionView: UICollectionView!
-    @IBOutlet weak var noImagesLabel: UILabel!
     @IBOutlet weak var editButton: UIBarButtonItem!
     
-    // Array of IndexPath - keeping track of index of selected cells
-    var selectedIndexofCollectionViewCells = [NSIndexPath]()
+    var selectedPin:Pin!
+    var lastAddedPin:Pin? = nil
+    var isEditMode = false
+    var mapViewRegion:MapRegion?
     
-    // MARK: - Core Data Convenience
-    
-    var sharedContext: NSManagedObjectContext {
-        return CoreDataStackManager.sharedInstance().managedObjectContext
-    }
-    
-    // Mark: - Fetched Results Controller
-    
-    // Lazily computed property pointing to the Photos entity objects, sorted by title, predicated on the pin.
-    lazy var fetchedResultsController: NSFetchedResultsController = {
-        
-        // Create fetch request for photos which match the sent Pin.
-        let fetchRequest = NSFetchRequest(entityName: "Photo")
-        
-        // Limit the fetch request to just those photos related to the Pin.
-        fetchRequest.predicate = NSPredicate(format: "pin == %@", self.pin!)
-        
-        // Sort the fetch request by title, ascending.
-        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-        
-        // Create fetched results controller with the new fetch request.
-        let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
-        
-        return fetchedResultsController
-    }()
-    
-    
-    // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        multiUseButton.hidden = false
-        noImagesLabel.hidden = true
+        // Add a LongPressGestureRecognizer to add a new Pin
+        let longPress = UILongPressGestureRecognizer(target: self, action: #selector(MapViewController.addPin(_:)))
+        longPress.minimumPressDuration = 1.0
+        mapView.addGestureRecognizer(longPress)
         
-        mapView.delegate = self
-        
-        // Load the map
-        loadMapView()
-        
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        
-        // Perform the fetch
+        loadMapRegion()
+        mapView.addAnnotations(fetchAllPins())
+    }
+    
+    
+    // MARK: - Core Data implementation
+    
+    func fetchAllPins() -> [Pin] {
+        let fetchRequest = NSFetchRequest(entityName: "Pin")
+        var pins:[Pin] = []
         do {
-            try fetchedResultsController.performFetch()
+            let results = try sharedContext.executeFetchRequest(fetchRequest)
+            pins = results as! [Pin]
         } catch let error as NSError {
-            print("\(error)")
+            showAlert("Ooops", message: "Something went wrong when trying to load existing data")
+            print("An error occured accessing managed object context \(error.localizedDescription)")
+        }
+        return pins
+    }
+    
+    
+    // MARK: - Adding and removing Pins
+    func addPin(gestureRecognizer: UIGestureRecognizer) {
+        
+        if isEditMode {
+            return
         }
         
-        // Set the delegate to this view controller
-        fetchedResultsController.delegate = self
+        let locationInMap = gestureRecognizer.locationInView(mapView)
+        let coord:CLLocationCoordinate2D = mapView.convertPoint(locationInMap, toCoordinateFromView: mapView)
         
-        // Subscirbe to notification so photos can be reloaded - catches the notification from FlickrConvenient
-        NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(MapViewController.photoReload(_:)), name: "downloadPhotoImage.done", object: nil)
-    }
-    
-    // Inserting dispatch_async to ensure the closure always run in the main thread
-    func photoReload(notification: NSNotification) {
-        dispatch_async(dispatch_get_main_queue(), {
-            self.collectionView.reloadData()
-            
-            // If no photos remaining, show the 'New Collection' button
-            let numberRemaining = FlickrClient.sharedInstance().numberOfPhotoDownloaded
-            print("numberRemaining is from photoReload \(numberRemaining)")
-            if numberRemaining <= 0 {
-                self.multiUseButton.hidden = false
-            }
-        })
-    }
-    
-    private func reFetch() {
-        do {
-            try fetchedResultsController.performFetch()
-        } catch let error as NSError {
-            print("reFetch - \(error)")
-        }
-    }
-    
-    
-    // Note: "new' images might overlap with previous collections of images
-    @IBAction func multiUseButtonTapped(sender: UIButton) {
-        
-        // Hiding the button once it's tapped, because I want to finish either deleting or reloading first
-        multiUseButton.hidden = true
-        
-        // If deleting flag is true, delete the photo
-        if isDeleting == true
-        {
-            // Removing the photo that user selected one by one
-            for indexPath in selectedIndexofCollectionViewCells {
-                
-                // Get photo associated with the indexPath.
-                let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
-                
-                print("Deleting this -- \(photo)")
-                
-                // Remove the photo
-                sharedContext.deleteObject(photo)
-                
-            }
-            
-            // Empty the array of indexPath after deletion
-            selectedIndexofCollectionViewCells.removeAll()
-            
-            // Save the chanages to core data
-            CoreDataStackManager.sharedInstance().saveContext()
-            
-            // Update cells
-            reFetch()
-            collectionView.reloadData()
-            
-            // Change the button to say 'New Collection' after deletion
-            multiUseButton.setTitle("New Collection", forState: UIControlState.Normal)
-            multiUseButton.hidden = false
-            
-            isDeleting = false
-            
-            // Else "New Collection" button is tapped
-        } else {
-            
-            // 1. Empty the photo album from the previous set
-            for photo in fetchedResultsController.fetchedObjects as! [Photo]{
-                sharedContext.deleteObject(photo)
-            }
-            
-            // 2. Save the chanages to core data
-            CoreDataStackManager.sharedInstance().saveContext()
-            
-            // 3. Download a new set of photos with the current pin
-            FlickrClient.sharedInstance().downloadPhotosForPin(pin!, completionHandler: {
-                success, error in
-                
-                if success {
-                    dispatch_async(dispatch_get_main_queue(), {
-                        CoreDataStackManager.sharedInstance().saveContext()
-                    })
-                } else {
-                    dispatch_async(dispatch_get_main_queue(), {
-                        print("error downloading a new set of photos")
-                        self.multiUseButton.hidden = false
-                    })
+        switch gestureRecognizer.state {
+        case UIGestureRecognizerState.Began:
+            lastAddedPin = Pin(coordinate: coord, context: sharedContext)
+            mapView.addAnnotation(lastAddedPin!)
+        case UIGestureRecognizerState.Changed:
+            lastAddedPin!.willChangeValueForKey("coordinate")
+            lastAddedPin!.coordinate = coord
+            lastAddedPin!.didChangeValueForKey("coordinate")
+        case UIGestureRecognizerState.Ended:
+            getPhotosForPin(lastAddedPin!) { (success, errorString) in
+                self.lastAddedPin!.isDownloading = false
+                if success == false {
+                    self.showAlert("An error occurred", message: errorString!)
+                    return
                 }
-                // Update cells
-                dispatch_async(dispatch_get_main_queue(), {
-                    self.reFetch()
-                    self.collectionView.reloadData()
-                })
-                
-            })
-        }
-    }
-    
-    // Load map view for the current pin
-    // Reference: http://studyswift.blogspot.com/2014/09/mkpointannotation-put-pin-on-map.html
-    func loadMapView() {
-        
-        let point = MKPointAnnotation()
-        
-        point.coordinate = CLLocationCoordinate2DMake((pin?.latitude)!, (pin?.longitude)!)
-        mapView.addAnnotation(point)
-        mapView.centerCoordinate = point.coordinate
-        
-        // Select the annotation so the title can be shown
-        mapView.selectAnnotation(point, animated: true)
-        
-    }
-    
-    // Return the number of photos from fetchedResultsController
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int{
-        
-        let sectionInfo = self.fetchedResultsController.sections![section]
-        print("Number of photos returned from fetchedResultsController #\(sectionInfo.numberOfObjects)")
-        // If numberOfObjects is not zero, hide the noImagesLabel
-        noImagesLabel.hidden = sectionInfo.numberOfObjects != 0
-        
-        return sectionInfo.numberOfObjects
-    }
-    
-    @IBAction func editButtonTapped(sender: AnyObject) {
-        
-        if editingFlag == false {
-            editingFlag = true
-            navigationItem.rightBarButtonItem?.title = "Done"
-            multiUseButton.setTitle("Tap photos to delete", forState: UIControlState.Normal)
-        }
-            
-        else if editingFlag {
-            navigationItem.rightBarButtonItem?.title = "Edit"
-            editingFlag = false
-            multiUseButton.hidden = false
-        }
-        
-    }
-    // Remove photos from an album when user select a cell or multiple cells
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath){
-        
-        if editingFlag == false{
-            
-            let myImageViewPage: ImageScrollView = self.storyboard?.instantiateViewControllerWithIdentifier("ImageScrollView") as! ImageScrollView
-            let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
-            
-            // Pass the selected image
-            myImageViewPage.selectedImage = photo.url!
-            
-            self.navigationController?.pushViewController(myImageViewPage, animated: true)
-        }
-            
-        else if (editingFlag) {
-            
-            // Configure the UI of the collection item
-            let cell = collectionView.cellForItemAtIndexPath(indexPath) as! FlickrCell
-            
-            // When user deselect the cell, remove it from the selectedIndexofCollectionViewCells array
-            if let index = selectedIndexofCollectionViewCells.indexOf(indexPath){
-                selectedIndexofCollectionViewCells.removeAtIndex(index)
-                cell.deleteButton.hidden = true
-            } else {
-                // Else, add it to the selectedIndexofCollectionViewCells array
-                selectedIndexofCollectionViewCells.append(indexPath)
-                cell.deleteButton.hidden = false
-                multiUseButton.setTitle("New Collection", forState: UIControlState.Normal)
             }
-            
-            // If the selectedIndexofCollectionViewCells array is not empty, show the 'Delete # photo(s)' button
-            if selectedIndexofCollectionViewCells.count > 0 {
-                
-                print("Delete array has \(selectedIndexofCollectionViewCells.count) photo(s).")
-                if selectedIndexofCollectionViewCells.count == 1{
-                    multiUseButton.setTitle("Delete \(selectedIndexofCollectionViewCells.count) photo", forState: UIControlState.Normal)
-                } else {
-                    multiUseButton.setTitle("Delete \(selectedIndexofCollectionViewCells.count) photos", forState: UIControlState.Normal)
-                }
-                isDeleting = true
-            } else{
-                multiUseButton.setTitle("New Collection", forState: UIControlState.Normal)
-                isDeleting = false
-            }
-            
-        } // End of else if editingFlag = true
-        
-    }
-    
-    // The cell that is returned must be retrieved from a call to -dequeueReusableCellWithReuseIdentifier:forIndexPath:
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell{
-        
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("FlickrCell", forIndexPath: indexPath) as! FlickrCell
-        cell.photoView.image = UIImage(named: "noimage")
-        let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
-        
-        if (photo.url != nil)
-        {
-            cell.photoView.image = photo.image
-            cell.activityIndicator.stopAnimating()
+            CoreDataStackManager.sharedInstance().saveContext()
+        default:
+            return
         }
         
-        
-        cell.deleteButton.hidden = true
-        cell.deleteButton.layer.setValue(indexPath, forKey: "indexPath")
-        
-        // Trigger the action 'deletePhoto' when the button is tapped
-        cell.deleteButton.addTarget(self, action: #selector(MapViewController.deletePhoto(_:)), forControlEvents: UIControlEvents.TouchUpInside)
-        
-        return cell
     }
-    
-    func deletePhoto(sender: UIButton){
-        
-        // I want to know if the cell is selected giving the indexPath
-        let indexOfTheItem = sender.layer.valueForKey("indexPath") as! NSIndexPath
-        
-        // Get the photo associated with the indexPath
-        let photo = fetchedResultsController.objectAtIndexPath(indexOfTheItem) as! Photo
-        print("Delete cell selected from 'deletePhoto' is \(photo)")
-        
-        // When user deselected it, remove it from the selectedIndexofCollectionViewCells array
-        if let index = selectedIndexofCollectionViewCells.indexOf(indexOfTheItem){
-            selectedIndexofCollectionViewCells.removeAtIndex(index)
-        }
-        
-        // Remove the photo
-        sharedContext.deleteObject(photo)
-        
-        // Save to core data
+    func deletePin(pin: Pin) {
+        mapView.removeAnnotation(pin)
+        sharedContext.deleteObject(pin)
         CoreDataStackManager.sharedInstance().saveContext()
+    }
+    
+    
+    @IBAction func toggleEditMode(sender: AnyObject) {
+        if isEditMode {
+            isEditMode = false
+            editButton.title = "Edit"
+        } else {
+            isEditMode = true
+            editButton.title = "Done"
+        }
+    }
+    
+    // MARK - MKMapViewDelegate methods
+    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
         
-        // Update selected cell
-        reFetch()
-        collectionView.reloadData()
+        if let annotation = annotation as? Pin {
+            let identifier = "Pin"
+            var view: MKPinAnnotationView
+            
+            if let dequeuedView = mapView.dequeueReusableAnnotationViewWithIdentifier(identifier) as? MKPinAnnotationView {
+                dequeuedView.annotation = annotation
+                view = dequeuedView
+            } else {
+                view = MKPinAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+                view.canShowCallout = false
+                view.animatesDrop = true
+                view.draggable = false
+            }
+            return view
+        }
+        return nil
+    }
+    
+    func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
+        print("Pin selected")
+        let annotation = view.annotation as! Pin
+        selectedPin = annotation
+        if !isEditMode {
+            performSegueWithIdentifier("locationDetail", sender: self)
+        } else {
+            let alert = UIAlertController(title: "Delete Pin", message: "Do you want to remove this pin?", preferredStyle: .Alert)
+            alert.addAction(UIAlertAction(title: "Cancel", style: .Default, handler: nil))
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: .Default, handler: { (action: UIAlertAction) in
+                self.selectedPin = nil
+                self.deletePin(annotation)
+            }))
+            presentViewController(alert, animated: true, completion: nil)
+        }
+    }
+    
+    // We need to detect any changes in region to store them
+    func mapView(mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        print("Saving Map Coordinates")
+        saveMapRegion()
+    }
+    
+    
+    // MARK - save and load map region
+    struct mapKeys {
+        static let centerLatitude = "CenterLatitudeKey"
+        static let centerLongitude = "CenterLongitude"
+        static let spanLatitude = "SpanLatitudeDeltaKey"
+        static let spanLongitude = "SpanLongitudeDeltaKey"
+    }
+    
+    
+    func saveMapRegion() {
+        if mapViewRegion == nil {
+            mapViewRegion = MapRegion(region: mapView.region, context: sharedContext)
+        } else {
+            mapViewRegion!.region = mapView.region
+        }
+        CoreDataStackManager.sharedInstance().saveContext()
+    }
+    
+    func loadMapRegion() {
+        let fetchRequest = NSFetchRequest(entityName: "MapRegion")
+        var regions:[MapRegion] = []
+        do {
+            let results = try sharedContext.executeFetchRequest(fetchRequest)
+            regions = results as! [MapRegion]
+        } catch let error as NSError {
+            // only map region failed, so failing silent
+            print("An error occured accessing managed object context \(error.localizedDescription)")
+        }
+        if regions.count > 0 {
+            mapViewRegion = regions[0]
+            mapView.region = mapViewRegion!.region
+        } else {
+            mapViewRegion = MapRegion(region: mapView.region, context: sharedContext)
+        }
     }
     
     
     
-} // The end
-
+    
+    // MARK: - Navigation
+    
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == "locationDetail" {
+            mapView.deselectAnnotation(selectedPin, animated: false)
+            let controller = segue.destinationViewController as! LocationDetailViewController
+            controller.pin = selectedPin
+        }
+    }
+    
+    
+}
