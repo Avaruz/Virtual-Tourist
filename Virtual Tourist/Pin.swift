@@ -5,39 +5,38 @@
 //  Created by Adhemar Soria Galvarro on 28/3/16.
 //  Copyright © 2016 Adhemar Soria Galvarro. All rights reserved.
 //
-
-import UIKit
-import MapKit
+import Foundation
 import CoreData
+import MapKit
 
-class Pin: NSManagedObject, MKAnnotation {
-
-    @NSManaged var latitude: Double
+@objc(Pin)
+class Pin: NSManagedObject {
+    
     @NSManaged var longitude: Double
-    @NSManaged var numPages: NSNumber?
-    @NSManaged var photos:[Photo]
+    @NSManaged var latitude: Double
+    @NSManaged var pageNumber: NSNumber?
+    @NSManaged var photos: NSSet?
     
-    var isDownloading = false
+    var coordinate: CLLocationCoordinate2D {
+        return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
     
+    // In Swift, superclass initializers are not available to subclasses, so it is necessary to include this initializer and call the superclass' implementation of it.
     override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
         super.init(entity: entity, insertIntoManagedObjectContext: context)
     }
     
-    init(coordinate: CLLocationCoordinate2D, context: NSManagedObjectContext) {
+    init(lat: Double, long: Double, context: NSManagedObjectContext) {
         let entity = NSEntityDescription.entityForName("Pin", inManagedObjectContext: context)!
         super.init(entity: entity, insertIntoManagedObjectContext: context)
         
-        self.latitude = coordinate.latitude
-        self.longitude = coordinate.longitude
+        self.latitude = lat
+        self.longitude = long
+        self.pageNumber = 0
     }
     
-    var coordinate: CLLocationCoordinate2D {
-        get {
-            return CLLocationCoordinate2DMake(latitude, longitude)
-        }
-        set {
-            self.latitude = newValue.latitude
-            self.longitude = newValue.longitude
-        }
+    var sharedContext: NSManagedObjectContext {
+        return CoreDataStackManager.sharedInstance().managedObjectContext
+        
     }
 }

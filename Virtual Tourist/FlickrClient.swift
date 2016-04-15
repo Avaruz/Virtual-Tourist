@@ -1,121 +1,175 @@
-//
-//  FlickrClient.swift
-//  Virtual Tourist
-//
-//  Created by Adhemar Soria Galvarro on 28/3/16.
-//  Copyright © 2016 Adhemar Soria Galvarro. All rights reserved.
-//
-
+import UIKit
 import Foundation
+import CoreData
+import SystemConfiguration
 
 class FlickrClient: NSObject {
     
-    var session: NSURLSession    
+    var numberOfPhotoDownloaded = 0
     
+    // Shared session
+    var session: NSURLSession
     
-    static let sharedInstance = FlickrClient()
-    
-    private override init() {
+    override init() {
         session = NSURLSession.sharedSession()
         super.init()
     }
     
-    // MARK: GET Methods
-    func taskForGETMethod(url: String?, parameters: [String : AnyObject]?, parseJSON: Bool, completionHandler: (result: AnyObject!, error: NSError?) -> Void) -> NSURLSessionDataTask {
+    // MARK: - GET request
+    
+    func taskForGETMethodWithParameters(parameters: [String : AnyObject],
+                                        completionHandler: (result: AnyObject!, error: NSError?) -> Void) {
         
-        var urlString = (url != nil) ? url : Constants.BASE_URL
-        if parameters != nil {
-            var mutableParameters = parameters
-            mutableParameters![ParameterKeys.API_KEY] = Constants.APIKey
-            urlString = urlString! + FlickrClient.escapedParameters(mutableParameters!)
-        }
+        // Build the URL and configure the request
+        let urlString = Constants.BASE_URL + FlickrClient.escapedParameters(parameters)
+        let request = NSMutableURLRequest(URL: NSURL(string: urlString)!)
         
-        let url = NSURL(string: urlString!)!
-        let request = NSURLRequest(URL: url)
-        
-        /* 4. Make the request */
-        let task = session.dataTaskWithRequest(request) { (data, response, error) in
+        // Make the request
+        let task = session.dataTaskWithRequest(request) {
+            data, response, downloadError in
             
-            /* GUARD: Was there an error? */
-            guard (error == nil) else {
-                print("There was an error with your request: \(error)")
-                completionHandler(result: nil, error: NSError(domain: "getTask", code: 2, userInfo: nil))
-                return
-            }
-            
-            /* GUARD: Did we get a successful 2XX response? */
-            guard let statusCode = (response as? NSHTTPURLResponse)?.statusCode where statusCode >= 200 && statusCode <= 299 else {
-                var errorCode = 0 /* technical error */
-                if let response = response as? NSHTTPURLResponse {
-                    print("Your request returned an invalid response! Status code: \(response.statusCode)!")
-                    errorCode = response.statusCode
-                } else if let response = response {
-                    print("Your request returned an invalid response! Response: \(response)!")
-                } else {
-                    print("Your request returned an invalid response!")
-                }
-                dispatch_async(dispatch_get_main_queue(), {
-                    completionHandler(result: nil, error: NSError(domain: "getTask", code: errorCode, userInfo: nil))
-                })
-                return
-            }
-            
-            /* GUARD: Was there any data returned? */
-            guard let data = data else {
-                print("No data was returned by the request!")
-                completionHandler(result: nil, error: NSError(domain: "getTask", code: 3, userInfo: nil))
-                return
-            }
-            
-            /* 5/6. Parse the data and use the data (happens in completion handler) */
-            if parseJSON {
-                FlickrClient.parseJSONWithCompletionHandler(data, completionHandler: completionHandler)
+            // Parse the received data
+            if let error = downloadError {
+                let newError = FlickrClient.errorForResponse(data, response: response, error: error)
+                completionHandler(result: nil, error: newError)
             } else {
-                completionHandler(result: data, error: nil)
+                FlickrClient.parseJSONWithCompletionHandler(data!, completionHandler: completionHandler)
             }
-            
         }
         
-        /* 7. Start the request */
+        // Start the request
         task.resume()
-        
-        return task
     }
     
-
+    // MARK: POST
+    func taskForGETMethod(urlString: String,
+                          completionHandler: (result: NSData?, error: NSError?) -> Void) {
+        
+        // Create the request
+        let request = NSMutableURLRequest(URL: NSURL(string: urlString)!)
+        
+        // Make the request
+        let task = session.dataTaskWithRequest(request) {
+            data, response, downloadError in
+            
+            if let error = downloadError {
+                
+                let newError = FlickrClient.errorForResponse(data, response: response, error: error)
+                completionHandler(result: nil, error: newError)
+            } else {
+                
+                completionHandler(result: data, error: nil)
+            }
+        }
+        
+        // Start the request
+        task.resume()
+    }
     
-    // MARK: Helper Methods
+    // MARK: - Helpers
+    
+    // Substitute the key for the value that is contained within the method name
+    class func subtituteKeyInMethod(method: String, key: String, value: String) -> String? {
+        if method.rangeOfString("{\(key)}") != nil {
+            return method.stringByReplacingOccurrencesOfString("{\(key)}", withString: value)
+        } else {
+            return nil
+        }
+    }
+    
+    // Given raw JSON, return a usable Foundation object
+    class func parseJSONWithCompletionHandler(data: NSData, completionHandler: (result: AnyObject!, error: NSError?) -> Void) {
+        
+        var parsingError: NSError?
+        let parsedResult: AnyObject?
+        
+        do {
+            parsedResult = try NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
+        } catch let error as NSError {
+            parsingError = error
+            parsedResult = nil
+            print("Parse error - \(parsingError!.localizedDescription)")
+            return
+        }
+        
+        if let error = parsingError {
+            completionHandler(result: nil, error: error)
+        } else {
+            completionHandler(result: parsedResult, error: nil)
+        }
+        
+    }
+    
+    
+    // Given a dictionary of parameters, convert to a string for a url
     class func escapedParameters(parameters: [String : AnyObject]) -> String {
         
         var urlVars = [String]()
         
         for (key, value) in parameters {
-            
-            /* Make sure that it is a string value */
-            let stringValue = "\(value)"
-            
-            /* Escape it */
-            let escapedValue = stringValue.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
-            
-            /* Append it */
-            urlVars += [key + "=" + "\(escapedValue!)"]
+            if(!key.isEmpty) {
+                // Make sure that it is a string value
+                let stringValue = "\(value)"
+                
+                // Escape it
+                let escapedValue = stringValue.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet())
+                
+                // Append it
+                urlVars += [key + "=" + "\(escapedValue!)"]
+            }
             
         }
         
         return (!urlVars.isEmpty ? "?" : "") + urlVars.joinWithSeparator("&")
     }
     
-    /* Parsing JSON */
-    class func parseJSONWithCompletionHandler(data: NSData, completionHandler: (result: AnyObject!, error: NSError?) -> Void) {
+    // Get error for response
+    class func errorForResponse(data: NSData?, response: NSURLResponse?, error: NSError) -> NSError {
         
-        var parsedResult: AnyObject!
-        do {
-            parsedResult = try NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments)
-        } catch {
-            let userInfo = [NSLocalizedDescriptionKey : "Could not parse the data as JSON: '\(data)'"]
-            completionHandler(result: nil, error: NSError(domain: "parseJSONWithCompletionHandler", code: 1, userInfo: userInfo))
+        if let parsedResult = (try? NSJSONSerialization.JSONObjectWithData(data!, options: .AllowFragments)) as? [String : AnyObject] {
+            
+            if let status = parsedResult[JSONResponseKeys.Status]  as? String,
+                message = parsedResult[JSONResponseKeys.Message] as? String {
+                
+                if status == JSONResponseValues.Fail {
+                    
+                    let userInfo = [NSLocalizedDescriptionKey: message]
+                    
+                    return NSError(domain: "Virtual Tourist Error", code: 1, userInfo: userInfo)
+                }
+            }
+        }
+        return error
+    }
+    
+    // MARK: - Show error alert
+    
+    func showAlert(message: NSError, viewController: AnyObject) {
+        let errMessage = message.localizedDescription
+        
+        let alert = UIAlertController(title: nil, message: errMessage, preferredStyle: UIAlertControllerStyle.Alert)
+        alert.addAction(UIAlertAction(title: "OK", style: UIAlertActionStyle.Default, handler: { action in
+            alert.dismissViewControllerAnimated(true, completion: nil)
+        }))
+        
+        viewController.presentViewController(alert, animated: true, completion: nil)
+    }
+    
+    func openURL(urlString: String) {
+        let url = NSURL(string: urlString)
+        UIApplication.sharedApplication().openURL(url!)
+    }
+    
+    // MARK: - Shared Instance
+    
+    class func sharedInstance() -> FlickrClient {
+        
+        struct Singleton {
+            static var sharedInstance = FlickrClient()
         }
         
-        completionHandler(result: parsedResult, error: nil)
+        return Singleton.sharedInstance
     }
+    
+    
 }

@@ -12,129 +12,122 @@ import CoreData
 extension FlickrClient {
     
     
-    func getPhotosForPin(pin: Pin, completionHandler: (success: Bool, errorString: String?) -> Void) {
+    // Initiates a download from Flickr
+    func downloadPhotosForPin(pin: Pin, completionHandler: (success: Bool, error: NSError?) -> Void) {
         
-        // see if we previously  received total number of pages for pin
-        var pageNumber = 1
+        var randomPageNumber: Int = 1
         
-        guard let numPages = pin.numPages else {
-            return
+        if let numberPages = pin.pageNumber?.integerValue {
+            if numberPages > 0 {
+                let pageLimit = min(numberPages, 20)
+                randomPageNumber = Int(arc4random_uniform(UInt32(pageLimit))) + 1 }
         }
         
-        var numPagesInt = numPages as Int
-        // We might only access the first 4000 images returned by a search, so limit the results
-        if numPagesInt > 190 {
-            numPagesInt = 190
-        }
-        pageNumber = Int((arc4random_uniform(UInt32(numPagesInt)))) + 1
-        print("Getting photos for page number \(pageNumber) in \(numPages) total pages")
-        
-        // Shuffle Sort to get more random images
-        let possibleSorts = ["date-posted-desc", "date-posted-asc", "date-taken-desc", "date-taken-asc", "interstingness-desc", "interestingness-asc"]
-        let sortBy = possibleSorts[Int((arc4random_uniform(UInt32(possibleSorts.count))))]
-        
-        let parameters = [
-            ParameterKeys.METHOD: Methods.SEARCH,
-            ParameterKeys.EXTRAS: ParameterValues.URL_M,
-            ParameterKeys.FORMAT: ParameterValues.JSON_FORMAT,
-            ParameterKeys.NO_JSON_CALLBACK: "1",
-            ParameterKeys.SAFE_SEARCH: "1",
-            ParameterKeys.BBOX: createBoundingBoxString(pin),
-            ParameterKeys.PAGE: pageNumber,
-            ParameterKeys.PER_PAGE: 21,
-            ParameterKeys.SORT: sortBy
+        // Parameters for request photos
+        let parameters: [String : AnyObject] = [
+            URLKeys.Method : Methods.Search,
+            URLKeys.APIKey : Constants.APIKey,
+            URLKeys.Format : URLValues.JSONFormat,
+            URLKeys.NoJSONCallback : 1,
+            URLKeys.Latitude : pin.latitude,
+            URLKeys.Longitude : pin.longitude,
+            URLKeys.Extras : URLValues.URLMediumPhoto,
+            URLKeys.Page : randomPageNumber,
+            URLKeys.PerPage : 21
         ]
         
-        taskForGETMethod(nil, parameters: parameters as? [String : AnyObject], parseJSON: true) { (JSONResult, error) in
+        // Make GET request for get photos for pin
+        taskForGETMethodWithParameters(parameters, completionHandler: {
+            results, error in
             
-            
-            
-            guard let error = error  else {
-                if let photosDictionary = JSONResult.valueForKey("photos") as? [String: AnyObject],
-                    photosArray = photosDictionary["photo"] as? [[String: AnyObject]],
-                    numPages = photosDictionary["pages"] as? Int {
-                    
-                    dispatch_async(dispatch_get_main_queue(), {
-                        pin.numPages = numPages
-                        
-                        for photoDictionary in photosArray {
-                            let photoURLString = photoDictionary["url_m"] as! String
-                            let photo = Photo(photoURL: photoURLString, pin: pin, context: self.sharedContext)
-                            
-                            self.downloadImageForPhoto(photo) { (success, errorString) in
-                                if success {
-                                    dispatch_async(dispatch_get_main_queue(), {
-                                        CoreDataStackManager.sharedInstance().saveContext()
-                                        completionHandler(success: true, errorString: nil)
-                                    })
-                                } else {
-                                    dispatch_async(dispatch_get_main_queue(), {
-                                        completionHandler(success: false, errorString: errorString)
-                                    })
-                                }
-                            }
-                        }
-                    })
-                } else {
-                    completionHandler(success: false, errorString: "Unable to download Photos")
-                }
-                return
-            }
-            
-            var errorMessage = ""
-            switch error.code {
-            case 2:
-                errorMessage = "Network connection lost"
-                break
-            default:
-                errorMessage = "A technical error occured while fetching photos"
-                break
-            }
-            completionHandler(success: false, errorString: errorMessage)
-            
-            
-        }
-    }
-    
-    func downloadImageForPhoto(photo: Photo, completionHandler: (success: Bool, errorString: String?) -> Void) {
-        
-        taskForGETMethod(photo.photoURL, parameters: nil, parseJSON: false) { (result, error) in
-            if error != nil {
-                photo.imagePath = "unavailable"
-                completionHandler(success: false, errorString: "Unable to download Photo")
+            if let error = error {
+                completionHandler(success: false, error: error)
             } else {
-                if let result = result {
-                    dispatch_async(dispatch_get_main_queue(), {
-                        let fileName = (photo.photoURL as NSString).lastPathComponent
-                        let path = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
-                        let pathArray = [path, fileName]
-                        let fileURL = NSURL.fileURLWithPathComponents(pathArray)!
+                
+                // Response dictionary
+                if let photosDictionary = results.valueForKey(JSONResponseKeys.Photos) as? [String: AnyObject],
+                    photosArray = photosDictionary[JSONResponseKeys.Photo] as? [[String : AnyObject]],
+                    numberOfPhotoPages = photosDictionary[JSONResponseKeys.Pages] as? Int {
+                    
+                    pin.pageNumber = numberOfPhotoPages
+                    
+                    self.numberOfPhotoDownloaded = photosArray.count
+                    
+                    // Dictionary with photos
+                    for photoDictionary in photosArray {
                         
-                        NSFileManager.defaultManager().createFileAtPath(fileURL.path!, contents: result as? NSData, attributes: nil)
+                        guard let photoURLString = photoDictionary[URLValues.URLMediumPhoto] as? String else {
+                            print ("error, photoDictionary)"); continue}
                         
-                        photo.imagePath = fileURL.path
-                        completionHandler(success: true, errorString: nil)
-                    })
+                        // Create the Photos model
+                        let newPhoto = Photo(photoURL: photoURLString, pin: pin, context: self.sharedContext)
+                        
+                        
+                        // Download photo by url
+                        self.downloadPhotoImage(newPhoto, completionHandler: {
+                            success, error in
+                            
+                            //print("Downloading photo by URL - \(success): \(error)")
+                            
+                            self.numberOfPhotoDownloaded -= 1
+                            // Posting NSNotifications
+                            NSNotificationCenter.defaultCenter().postNotificationName("downloadPhotoImage.done", object: nil)
+                            
+                            // Save the context
+                            dispatch_async(dispatch_get_main_queue(), {
+                                CoreDataStackManager.sharedInstance().saveContext()
+                            })
+                        })
+                    }
+                    
+                    completionHandler(success: true, error: nil)
                 } else {
-                    completionHandler(success: false, errorString: "Unable to download Photo")
+                    
+                    completionHandler(success: false, error: NSError(domain: "downloadPhotosForPin", code: 0, userInfo: nil))
                 }
             }
-        }
+        })
     }
     
-    func createBoundingBoxString(pin: Pin) -> String {
+    // Download save image and change file path for photo
+    func downloadPhotoImage(photo: Photo, completionHandler: (success: Bool, error: NSError?) -> Void) {
         
-        let latitude = pin.coordinate.latitude
-        let longitude = pin.coordinate.longitude
+        let imageURLString = photo.url!
         
-        /* Fix added to ensure box is bounded by minimum and maximums */
-        let bottom_left_lon = max(longitude - BBoxParameters.BOUNDING_BOX_HALF_WIDTH, BBoxParameters.LON_MIN)
-        let bottom_left_lat = max(latitude - BBoxParameters.BOUNDING_BOX_HALF_HEIGHT, BBoxParameters.LAT_MIN)
-        let top_right_lon = min(longitude + BBoxParameters.BOUNDING_BOX_HALF_HEIGHT, BBoxParameters.LON_MAX)
-        let top_right_lat = min(latitude + BBoxParameters.BOUNDING_BOX_HALF_HEIGHT, BBoxParameters.LAT_MAX)
-        
-        return "\(bottom_left_lon),\(bottom_left_lat),\(top_right_lon),\(top_right_lat)"
+        // Make GET request for download photo by url
+        taskForGETMethod(imageURLString, completionHandler: {
+            result, error in
+            
+            // If there is an error - set file path to error to show blank image
+            if let error = error {
+                print("Error from downloading images \(error.localizedDescription )")
+                photo.filePath = "error"
+                completionHandler(success: false, error: error)
+                
+            } else {
+                
+                if let result = result {
+                    
+                    // Get file name and file url
+                    let fileName = (imageURLString as NSString).lastPathComponent
+                    let dirPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0]
+                    let pathArray = [dirPath, fileName]
+                    let fileURL = NSURL.fileURLWithPathComponents(pathArray)!
+                    //print(fileURL)
+                    
+                    // Save file
+                    NSFileManager.defaultManager().createFileAtPath(fileURL.path!, contents: result, attributes: nil)
+                    
+                    // Update the Photos model
+                    photo.filePath = fileURL.path
+                    
+                    completionHandler(success: true, error: nil)
+                }
+            }
+        })
     }
+    
+    // MARK: - Core Data Convenience
     
     var sharedContext: NSManagedObjectContext {
         return CoreDataStackManager.sharedInstance().managedObjectContext

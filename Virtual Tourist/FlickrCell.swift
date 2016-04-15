@@ -10,16 +10,18 @@ import UIKit
 
 class FlickrCell: UICollectionViewCell {
 
-    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var photoView: UIImageView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+    
+    @IBOutlet weak var deleteButton: UIButton!
     
     override func prepareForReuse() {
         
         super.prepareForReuse()
         
-        if imageView.image == nil {
+        if photoView.image == nil {
             activityIndicator.hidden = false
-            imageView.image = UIImage(named: "no-image")
+            photoView.image = UIImage(named: "no-image")
             activityIndicator.startAnimating()
         }
     }
